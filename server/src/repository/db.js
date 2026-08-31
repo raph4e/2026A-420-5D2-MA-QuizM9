@@ -21,6 +21,7 @@ db.exec('PRAGMA foreign_keys = ON');
  *
  * 1. Lire le fichier schema.sql : readFileSync(chemin, 'utf8'). Le chemin
  *    se construit comme celui de quizm9.db ci-dessus, à partir de dataDir.
+
  * 2. L'exécuter d'un bloc avec db.exec(...). Le schéma est en
  *    CREATE TABLE IF NOT EXISTS : le réexécuter à chaque démarrage est
  *    sans danger.
@@ -28,7 +29,17 @@ db.exec('PRAGMA foreign_keys = ON');
  * 4. S'il n'y en a aucun, lire et exécuter seed.sql de la même façon.
  */
 export function initializeDatabase() {
-  console.warn('repository/db.js : initializeDatabase est À faire.');
+  const schemaPath = fileURLToPath(new URL('schema.sql', dataDir));
+  const schema = readFileSync(schemaPath, 'utf8'); // Étape 1 : Lecture
+  db.exec(schema); // Étape 2 : Éxécution
+
+  const { count } = db.prepare('SELECT COUNT(*) AS count FROM quiz').get(); // Étape 3 : Compte les questionnaires
+
+  if (count === 0) {                                                                   
+    const seedPath = fileURLToPath(new URL('seed.sql', dataDir));
+    const seed = readFileSync(seedPath, 'utf8');
+    db.exec(seed); // Étape 4 : Si aucun quiz, lis et exécute seed.sql
+  }
 }
 
 /**

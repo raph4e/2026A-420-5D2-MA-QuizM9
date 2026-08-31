@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import { fetchQuiz } from '../api.js';
 
 /**
@@ -15,13 +15,19 @@ import { fetchQuiz } from '../api.js';
  * 3. Dans le composant, remplacez useParams + useState + useEffect par
  *    const quiz = useLoaderData();
  */
-export default function QuizDetails() {
-  const { id } = useParams();
-  const [quiz, setQuiz] = useState(null);
+export async function loader({ params }) {
+  const response = await fetch(`http://localhost:3000/api/quizzes/${params.id}`);
+  if (response.status === 404) {
+    throw new Response('Questionnaire introuvable.', { status: 404 });
+  }
+  if (!response.ok) {
+    throw new Error(`L'API répond ${response.status}.`);
+  }
+  return response.json();
+}
 
-  useEffect(() => {
-    fetchQuiz(id).then(setQuiz).catch(() => {});
-  }, [id]);
+export default function QuizDetails() {
+  const quiz = useLoaderData();
 
   if (!quiz) return <main className="screen">Chargement…</main>;
 
