@@ -293,16 +293,16 @@ app.post('/api/games/:code/answers', async (req, res) => {
     return res.status(400).json({ error: 'Joueur inconnu dans cette partie.' });
   }
   const question = await currentQuestion(game);
-  if (await repository.findAnswer(game.id, player.id, question.id)) {
-    return res.status(400).json({ error: 'Ce joueur a déjà répondu.' });
-  }
   if (!question.choices.some((c) => c.id === choiceId)) {
     return res.status(400).json({ error: 'Choix inconnu pour cette question.' });
   }
 
   // Le moment de la réponse est celui du SERVEUR : le bonus de rapidité ne
   // se négocie pas avec l'horloge du client (on y reviendra, semaine 11).
-  await repository.recordAnswer(game.id, player.id, question.id, choiceId, Date.now());
+  const response = await repository.recordAnswer(game.id, player.id, question.id, choiceId, Date.now());
+  if (!response) {
+    return res.status(409).json({ error: 'Ce joueur a déjà répondu'})
+  }
   await broadcastState(game.code); // tout le salon voit le compte de réponses monter
   res.status(201).json({});
 });

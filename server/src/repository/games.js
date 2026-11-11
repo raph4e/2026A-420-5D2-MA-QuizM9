@@ -108,10 +108,11 @@ export async function recordAnswer(gameId, playerId, questionId, choiceId, answe
   const { rows } = await pool.query(
     `INSERT INTO answer (game_id, player_id, question_id, choice_id, answered_at)
      VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT DO NOTHING
      RETURNING id`,
     [gameId, playerId, questionId, choiceId, answeredAt],
   );
-  return rows[0].id;
+  return rows[0]?.id ?? null;
 }
 
 /** Fait avancer la machine à états d'une partie, d'un seul UPDATE. */
@@ -120,6 +121,15 @@ export async function updateGameState(gameId, state, questionIndex, questionStar
     'UPDATE game SET state = $1, question_index = $2, question_started_at = $3 WHERE id = $4',
     [state, questionIndex, questionStartedAt, gameId],
   );
+}
+
+export async function transitionGame(gameId, from, to, db = pool) {
+  const { rowCount } = await db.query(
+    `UPDATE game SET state = $1, question_index = $2, question_started_at = $3
+      WHERE id = $4 AND $5 = "question" AND question_index = $2`,
+    [to.state, to.questionIndex, to.questionStartedAt, gameId, from.state, from.questionIndex],
+  );
+  // …
 }
 
 /** Inscrit les points obtenus par une réponse, une fois la question close. */

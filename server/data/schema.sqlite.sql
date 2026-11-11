@@ -84,5 +84,7 @@ CREATE TABLE IF NOT EXISTS answer (
   -- Points obtenus ; NULL tant que la question n'est pas close.
   points      INTEGER
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS answer_once ON answer (game_id, player_id, question_id);
 -- (game_id, player_id, question_id) devrait être UNIQUE : un joueur, une
 -- réponse par question. On y reviendra à la semaine 11.
